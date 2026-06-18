@@ -68,11 +68,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
-
-      <div className="mt-auto rounded-md border bg-card p-4 text-sm text-muted-foreground">
-        <div className="font-medium text-foreground">本地优先</div>
-        <p className="mt-1 leading-6">工具在浏览器内运行，不上传你的文件。</p>
-      </div>
     </aside>
   );
 }
