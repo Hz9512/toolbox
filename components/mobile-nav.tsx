@@ -15,7 +15,7 @@ export function MobileNav() {
         type="button"
         variant="ghost"
         size="icon"
-        className="lg:hidden"
+        className="rounded-full lg:hidden"
         onClick={() => setOpen(true)}
         aria-label="打开导航"
       >
@@ -35,6 +35,7 @@ export function MobileNav() {
                 type="button"
                 variant="ghost"
                 size="icon"
+                className="rounded-full"
                 onClick={() => setOpen(false)}
                 aria-label="关闭导航"
               >

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,48 +13,54 @@ export function ToolCard({ tool }: { tool: Tool }) {
   const disabled = tool.status !== "ready";
 
   return (
-    <article className="card-shine tool-card-surface group flex min-h-[210px] flex-col rounded-lg border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-soft">
-      <div className="flex items-start justify-between gap-3">
+    <article className="card-shine tool-card-surface group flex min-h-[172px] w-full min-w-0 flex-col overflow-hidden rounded-lg border border-border/60 p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-soft">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
         <div
           className={cn(
-            "flex h-11 w-11 items-center justify-center rounded-md border bg-background/80 text-foreground shadow-sm transition-colors group-hover:bg-foreground group-hover:text-background",
-            tool.status === "ready" ? "bg-secondary" : "bg-muted text-muted-foreground"
+            "flex h-10 w-10 items-center justify-center rounded-lg border border-border/70 bg-background/90 text-foreground shadow-sm transition-colors",
+            tool.status === "ready"
+              ? "group-hover:border-primary/35 group-hover:bg-primary group-hover:text-primary-foreground"
+              : "bg-muted text-muted-foreground"
           )}
         >
           <Icon className="h-5 w-5" />
         </div>
+        <Badge
+          className={cn(
+            "bg-background/70",
+            tool.status === "ready"
+              ? "border-teal-500/25 text-teal-700 dark:text-teal-200"
+              : "border-muted-foreground/20"
+          )}
+        >
+          {tool.status === "ready" ? "已上线" : "规划中"}
+        </Badge>
       </div>
 
-      <div className="mt-4 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold tracking-tight">{tool.name}</h3>
-          <Badge
-            className={cn(
-              tool.status === "ready"
-                ? "border-emerald-500/25 text-emerald-600 dark:text-emerald-300"
-                : "border-muted-foreground/20"
-            )}
-          >
-            {tool.status === "ready" ? "已上线" : "规划中"}
-          </Badge>
-        </div>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
+      <div className="mt-3 min-w-0 flex-1">
+        <h3 className="break-words font-semibold tracking-tight text-foreground/95">{tool.name}</h3>
+        <p className="mt-2 line-clamp-2 break-words text-sm leading-6 text-muted-foreground">
           {tool.description}
         </p>
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-3">
+      <div className="mt-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge>{getCategoryName(tool.category)}</Badge>
+          <Badge className="bg-background/70">{getCategoryName(tool.category)}</Badge>
         </div>
 
         {disabled ? (
-          <span className="text-sm text-muted-foreground">即将上线</span>
+          <span className="inline-flex h-8 items-center text-sm text-muted-foreground">即将上线</span>
         ) : (
-          <Button size="sm" className="transition-transform group-hover:translate-x-0.5" asChild>
+          <Button
+            size="sm"
+            className="h-8 rounded-full px-3 transition-transform group-hover:translate-x-0.5"
+            asChild
+          >
             <Link href={tool.href}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
               打开
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
             </Link>
           </Button>
         )}

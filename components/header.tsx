@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github } from "lucide-react";
+import { Github, Home, Plus, Sparkles, Wrench } from "lucide-react";
 
 import { MobileNav } from "@/components/mobile-nav";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -7,22 +7,55 @@ import { Button } from "@/components/ui/button";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/82 backdrop-blur-xl">
-      <div className="flex h-16 items-center justify-between gap-3 px-4 lg:px-8">
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/82 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-[1560px] items-center justify-between gap-3 px-3 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-2">
           <MobileNav />
-          <Link href="/" className="font-semibold tracking-tight lg:hidden">
-            Personal Toolbox
+          <Link href="/" className="shrink-0 text-xl font-semibold italic tracking-tight sm:text-3xl">
+            <span>tool</span>
+            <span className="brand-gradient bg-clip-text text-transparent">box</span>
+            <span className="ml-1 inline-block h-1.5 w-1.5 -translate-y-2 rounded-full bg-primary sm:h-2 sm:w-2" />
           </Link>
+          <nav className="ml-3 hidden items-center gap-1 md:flex">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            >
+              <Home className="h-4 w-4" />
+              首页
+            </Link>
+            <Link
+              href="/?category=all"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            >
+              <Sparkles className="h-4 w-4" />
+              精选
+            </Link>
+            <Link
+              href="/?category=developer"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            >
+              <Wrench className="h-4 w-4" />
+              工具
+            </Link>
+          </nav>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
+        <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-2">
+          <Button variant="ghost" size="sm" className="hidden rounded-full sm:inline-flex" asChild>
             <a href="https://github.com/" target="_blank" rel="noreferrer">
               <Github className="mr-2 h-4 w-4" />
               GitHub
             </a>
           </Button>
-          <ThemeSwitcher />
+          <Button size="sm" className="teal-gradient rounded-full px-3 text-white shadow-sm shadow-teal-500/20 sm:px-4" asChild>
+            <Link href="/tools/image-base64">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">开始使用</span>
+            </Link>
+          </Button>
+          <div className="hidden sm:block">
+            <ThemeSwitcher />
+          </div>
         </div>
       </div>
     </header>
