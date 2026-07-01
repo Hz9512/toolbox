@@ -9,6 +9,18 @@ export type EmbedLyricsResult = {
   warnings: string[];
 };
 
+export type LyricsMatchStrategy = "exact" | "fuzzy" | "single";
+
+export type LyricsMatchResult<T extends { name: string }> = {
+  file: T;
+  score: number;
+  strategy: LyricsMatchStrategy;
+};
+
+export type LyricsMatchOptions = {
+  allowSingleFallback?: boolean;
+};
+
 type Id3Frame = {
   id: string;
   data: Uint8Array;
@@ -39,10 +51,175 @@ export function getBaseName(fileName: string) {
 }
 
 export function normalizeMatchName(fileName: string) {
-  return getBaseName(fileName)
+  return createMatchProfile(fileName).compact;
+}
+
+export function findBestLyricsMatch<T extends { name: string }>(
+  audioFileName: string,
+  lyricsFiles: T[],
+  options: LyricsMatchOptions = {}
+): LyricsMatchResult<T> | null {
+  if (lyricsFiles.length === 0) {
+    return null;
+  }
+
+  const audioProfile = createMatchProfile(audioFileName);
+  const exact = lyricsFiles.find((file) => createMatchProfile(file.name).compact === audioProfile.compact);
+
+  if (exact) {
+    return { file: exact, score: 1, strategy: "exact" };
+  }
+
+  if (lyricsFiles.length === 1 && options.allowSingleFallback) {
+    return { file: lyricsFiles[0], score: scoreFileNameMatch(audioProfile, createMatchProfile(lyricsFiles[0].name)), strategy: "single" };
+  }
+
+  const matches = lyricsFiles
+    .map((file) => ({
+      file,
+      score: scoreFileNameMatch(audioProfile, createMatchProfile(file.name))
+    }))
+    .sort((left, right) => right.score - left.score);
+
+  const best = matches[0];
+  if (!best || best.score < 0.78) {
+    return null;
+  }
+
+  return { file: best.file, score: best.score, strategy: "fuzzy" };
+}
+
+type MatchProfile = {
+  compact: string;
+  tokens: string[];
+};
+
+const matchStopWords = new Set([
+  "lrc",
+  "lyric",
+  "lyrics",
+  "歌词",
+  "歌詞",
+  "动态歌词",
+  "動態歌詞",
+  "逐字歌词",
+  "逐字歌詞"
+]);
+
+function createMatchProfile(fileName: string): MatchProfile {
+  const text = getBaseName(fileName)
     .toLowerCase()
     .normalize("NFKC")
-    .replace(/[\s._-]+/g, "");
+    .replace(/\[[^\]]*]|\([^)]*\)|（[^）]*）|【[^】]*】/g, " ")
+    .replace(/['"`]/g, "")
+    .replace(/[._\-–—]+/g, " ")
+    .replace(/[·•,，、/\\|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const tokens = text
+    .split(" ")
+    .map((token) => compactMatchText(token))
+    .filter((token) => token && !matchStopWords.has(token));
+  const compact = compactMatchText(text);
+
+  return {
+    compact,
+    tokens: Array.from(new Set(tokens))
+  };
+}
+
+function compactMatchText(text: string) {
+  let compact = text
+    .replace(/\[[^\]]*]|\([^)]*\)|（[^）]*）|【[^】]*】/g, "")
+    .replace(/['"`]/g, "")
+    .replace(/[^a-z0-9\u00c0-\uffff]+/g, "")
+    .toLowerCase()
+    .normalize("NFKC");
+
+  matchStopWords.forEach((word) => {
+    compact = compact.replaceAll(word, "");
+  });
+
+  return compact;
+}
+
+function scoreFileNameMatch(audioProfile: MatchProfile, lyricsProfile: MatchProfile) {
+  if (!audioProfile.compact || !lyricsProfile.compact) {
+    return 0;
+  }
+
+  if (audioProfile.compact === lyricsProfile.compact) {
+    return 1;
+  }
+
+  const tokenScore = scoreTokenCoverage(audioProfile, lyricsProfile);
+  const substringScore = scoreSubstring(audioProfile.compact, lyricsProfile.compact);
+  const diceScore = scoreDiceCoefficient(audioProfile.compact, lyricsProfile.compact);
+
+  return Math.max(tokenScore, substringScore, diceScore);
+}
+
+function scoreTokenCoverage(audioProfile: MatchProfile, lyricsProfile: MatchProfile) {
+  const audioTokens = audioProfile.tokens.filter((token) => token.length > 1);
+
+  if (audioTokens.length < 2) {
+    return 0;
+  }
+
+  const covered = audioTokens.filter((token) =>
+    lyricsProfile.compact.includes(token) ||
+    lyricsProfile.tokens.some((lyricsToken) => lyricsToken.includes(token) || token.includes(lyricsToken))
+  );
+  const coverage = covered.length / audioTokens.length;
+
+  if (coverage < 1) {
+    return coverage * 0.72;
+  }
+
+  const extraTokenPenalty = Math.max(0, lyricsProfile.tokens.length - audioTokens.length) * 0.02;
+  return Math.max(0.82, 0.96 - extraTokenPenalty);
+}
+
+function scoreSubstring(left: string, right: string) {
+  const shorter = left.length <= right.length ? left : right;
+  const longer = left.length > right.length ? left : right;
+
+  if (shorter.length < 4 || !longer.includes(shorter)) {
+    return 0;
+  }
+
+  return 0.76 + (shorter.length / longer.length) * 0.18;
+}
+
+function scoreDiceCoefficient(left: string, right: string) {
+  const leftPairs = createBigrams(left);
+  const rightPairs = createBigrams(right);
+
+  if (leftPairs.length === 0 || rightPairs.length === 0) {
+    return left === right ? 1 : 0;
+  }
+
+  const counts = new Map<string, number>();
+  leftPairs.forEach((pair) => counts.set(pair, (counts.get(pair) ?? 0) + 1));
+
+  let intersection = 0;
+  rightPairs.forEach((pair) => {
+    const count = counts.get(pair) ?? 0;
+    if (count > 0) {
+      intersection += 1;
+      counts.set(pair, count - 1);
+    }
+  });
+
+  return (2 * intersection) / (leftPairs.length + rightPairs.length);
+}
+
+function createBigrams(text: string) {
+  if (text.length <= 1) {
+    return text ? [text] : [];
+  }
+
+  return Array.from({ length: text.length - 1 }, (_, index) => text.slice(index, index + 2));
 }
 
 export async function readLyricsFile(file: File) {
