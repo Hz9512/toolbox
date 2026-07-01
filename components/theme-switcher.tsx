@@ -17,7 +17,7 @@ export function ThemeSwitcher() {
   const setTheme = useToolboxStore((state) => state.setTheme);
 
   return (
-    <div className="flex rounded-md border bg-background p-1">
+    <div className="flex rounded-full border border-border/70 bg-card/80 p-1 shadow-sm">
       {options.map((option) => {
         const Icon = option.icon;
 
@@ -28,8 +28,8 @@ export function ThemeSwitcher() {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-8 gap-1.5 px-2.5 text-muted-foreground",
-              theme === option.value && "bg-accent text-foreground"
+              "h-8 rounded-full gap-1.5 px-2.5 text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
+              theme === option.value && "bg-accent text-accent-foreground shadow-sm"
             )}
             onClick={() => setTheme(option.value)}
             title={option.label}

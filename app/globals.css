@@ -4,40 +4,40 @@
 
 @layer base {
   :root {
-    --background: 0 0% 99%;
-    --foreground: 240 10% 3.9%;
+    --background: 210 33% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 5% 94%;
-    --accent-foreground: 240 5.9% 10%;
-    --border: 240 6% 88%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5% 64.9%;
+    --card-foreground: 222 47% 11%;
+    --primary: 178 74% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 32% 94%;
+    --secondary-foreground: 222 47% 13%;
+    --muted: 210 32% 95%;
+    --muted-foreground: 215 16% 45%;
+    --accent: 180 58% 94%;
+    --accent-foreground: 187 76% 26%;
+    --border: 214 32% 89%;
+    --input: 214 32% 89%;
+    --ring: 178 74% 36%;
     --radius: 8px;
   }
 
   .dark {
-    --background: 240 10% 4.5%;
-    --foreground: 0 0% 98%;
-    --card: 240 8% 6.5%;
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222 41% 10%;
     --card-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 5% 13%;
+    --primary: 176 68% 44%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 28% 15%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 5% 16%;
-    --accent-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --muted: 220 28% 16%;
+    --muted-foreground: 215 20% 66%;
+    --accent: 187 45% 16%;
+    --accent-foreground: 178 75% 72%;
+    --border: 220 26% 20%;
+    --input: 220 26% 20%;
+    --ring: 176 68% 44%;
   }
 
   * {
@@ -47,9 +47,12 @@
   body {
     @apply bg-background text-foreground antialiased;
     background:
-      radial-gradient(circle at 18% -8%, hsl(var(--accent) / 0.78), transparent 28rem),
-      radial-gradient(circle at 92% 8%, hsl(var(--secondary) / 0.88), transparent 22rem),
-      linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background) / 0.96));
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary) / 0.46) 58%, hsl(var(--background)));
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
   }
 }
 
@@ -59,10 +62,10 @@
 
 .subtle-grid {
   background-image:
-    linear-gradient(hsl(var(--border) / 0.55) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--border) / 0.55) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: linear-gradient(to bottom, black, transparent 78%);
+    linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 70%);
 }
 
 .card-shine {
@@ -75,12 +78,12 @@
   position: absolute;
   inset: 0 0 auto;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.18), transparent);
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.26), transparent);
 }
 
 .tool-card-surface {
   background:
-    linear-gradient(135deg, hsl(var(--card) / 0.98), hsl(var(--secondary) / 0.38)),
+    linear-gradient(135deg, hsl(var(--card) / 0.98), hsl(var(--accent) / 0.34)),
     hsl(var(--card));
 }
 
@@ -88,6 +91,14 @@
   content: "";
   position: absolute;
   inset: auto 0 0;
-  height: 3px;
-  background: linear-gradient(90deg, hsl(var(--foreground) / 0.08), transparent 55%);
+  height: 2px;
+  background: linear-gradient(90deg, hsl(var(--primary) / 0.45), transparent 60%);
+}
+
+.teal-gradient {
+  background-image: linear-gradient(120deg, #14b8a6, #0891b2);
+}
+
+.brand-gradient {
+  background-image: linear-gradient(120deg, #0f766e, #2563eb 54%, #7c3aed);
 }
