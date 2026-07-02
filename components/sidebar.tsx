@@ -48,11 +48,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             <Wrench className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-lg font-semibold italic tracking-tight">
-              <span>tool</span>
-              <span className="brand-gradient bg-clip-text text-transparent">box</span>
+            <div className="text-lg font-semibold tracking-tight">
+              <span className="brand-gradient bg-clip-text text-transparent">Lushifu</span>
             </div>
-            <div className="text-xs text-muted-foreground">个人工具百宝箱</div>
+            <div className="text-xs text-muted-foreground">个人效率导航</div>
           </div>
         </Link>
       </div>
