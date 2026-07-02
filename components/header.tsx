@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Home, Plus, Sparkles, Wrench } from "lucide-react";
+import { Bot, Github, Globe2, Home, Plus, Wrench } from "lucide-react";
 
 import { MobileNav } from "@/components/mobile-nav";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -11,9 +11,8 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-[1560px] items-center justify-between gap-3 px-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2">
           <MobileNav />
-          <Link href="/" className="shrink-0 text-xl font-semibold italic tracking-tight sm:text-3xl">
-            <span>tool</span>
-            <span className="brand-gradient bg-clip-text text-transparent">box</span>
+          <Link href="/" className="shrink-0 text-xl font-semibold tracking-tight sm:text-3xl">
+            <span className="brand-gradient bg-clip-text text-transparent">Lushifu</span>
             <span className="ml-1 inline-block h-1.5 w-1.5 -translate-y-2 rounded-full bg-primary sm:h-2 sm:w-2" />
           </Link>
           <nav className="ml-3 hidden items-center gap-1 md:flex">
@@ -25,14 +24,21 @@ export function Header() {
               首页
             </Link>
             <Link
-              href="/?category=all"
+              href="/?mode=web"
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
-              <Sparkles className="h-4 w-4" />
-              精选
+              <Globe2 className="h-4 w-4" />
+              网页搜索
             </Link>
             <Link
-              href="/?category=developer"
+              href="/?mode=ai"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            >
+              <Bot className="h-4 w-4" />
+              AI导航
+            </Link>
+            <Link
+              href="/?mode=tools"
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
               <Wrench className="h-4 w-4" />
