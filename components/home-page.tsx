@@ -39,6 +39,10 @@ type Wallpaper = {
   image: string;
 };
 
+const customWallpaperStorageKey = "lushifu.wallpaper";
+const customWallpaperIdStorageKey = "lushifu.wallpaperId";
+const maxStoredWallpaperLength = 3_500_000;
+
 const searchEngines: Array<{
   id: SearchEngineId;
   name: string;
@@ -180,6 +184,61 @@ function normalizeUrl(url: string) {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+function safeSetLocalStorage(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(source: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = source;
+  });
+}
+
+async function createStorableWallpaper(file: File) {
+  const original = await readFileAsDataUrl(file);
+  const image = await loadImage(original);
+  const largestSide = Math.max(image.naturalWidth, image.naturalHeight);
+  const scale = largestSide > 1920 ? 1920 / largestSide : 1;
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return original;
+  }
+
+  context.drawImage(image, 0, 0, width, height);
+
+  for (const quality of [0.82, 0.72, 0.62, 0.52]) {
+    const nextImage = canvas.toDataURL("image/jpeg", quality);
+    if (nextImage.length <= maxStoredWallpaperLength) {
+      return nextImage;
+    }
+  }
+
+  return canvas.toDataURL("image/jpeg", 0.45);
+}
+
 export function HomePage({
   initialCategory = "all",
   initialMode = "web"
@@ -211,8 +270,8 @@ export function HomePage({
 
   useEffect(() => {
     const savedLinks = window.localStorage.getItem("lushifu.aiLinks");
-    const savedWallpaper = window.localStorage.getItem("lushifu.wallpaper");
-    const savedWallpaperId = window.localStorage.getItem("lushifu.wallpaperId");
+    const savedWallpaper = window.localStorage.getItem(customWallpaperStorageKey);
+    const savedWallpaperId = window.localStorage.getItem(customWallpaperIdStorageKey);
 
     if (savedLinks) {
       try {
@@ -316,27 +375,34 @@ export function HomePage({
 
   function selectWallpaper(id: string, image: string) {
     setWallpaperId(id);
-    window.localStorage.setItem("lushifu.wallpaperId", id);
+    safeSetLocalStorage(customWallpaperIdStorageKey, id);
 
     if (id !== "custom") {
       setCustomWallpaper("");
-      window.localStorage.removeItem("lushifu.wallpaper");
+      window.localStorage.removeItem(customWallpaperStorageKey);
     } else if (image) {
       setCustomWallpaper(image);
-      window.localStorage.setItem("lushifu.wallpaper", image);
+      if (!safeSetLocalStorage(customWallpaperStorageKey, image)) {
+        window.localStorage.removeItem(customWallpaperStorageKey);
+      }
     }
   }
 
-  function uploadWallpaper(event: ChangeEvent<HTMLInputElement>) {
+  async function uploadWallpaper(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => selectWallpaper("custom", String(reader.result));
-    reader.readAsDataURL(file);
     event.target.value = "";
+
+    try {
+      const image = await createStorableWallpaper(file);
+      selectWallpaper("custom", image);
+    } catch {
+      const image = await readFileAsDataUrl(file);
+      selectWallpaper("custom", image);
+    }
   }
 
   return (

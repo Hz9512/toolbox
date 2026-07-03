@@ -3,18 +3,20 @@ import { categories, CategoryId } from "@/lib/tools";
 
 const modes = ["web", "ai", "tools"] as const;
 type SearchMode = (typeof modes)[number];
+type PageSearchParams = { category?: string; mode?: string };
 
-export default function Page({
+export default async function Page({
   searchParams
 }: {
-  searchParams?: { category?: string; mode?: string };
+  searchParams?: PageSearchParams | Promise<PageSearchParams>;
 }) {
+  const params = await searchParams;
   const categoryIds = categories.map((category) => category.id);
-  const category = categoryIds.includes(searchParams?.category as CategoryId)
-    ? (searchParams?.category as CategoryId)
+  const category = categoryIds.includes(params?.category as CategoryId)
+    ? (params?.category as CategoryId)
     : "all";
-  const mode = modes.includes(searchParams?.mode as SearchMode)
-    ? (searchParams?.mode as SearchMode)
+  const mode = modes.includes(params?.mode as SearchMode)
+    ? (params?.mode as SearchMode)
     : "web";
 
   return <HomePage initialCategory={category} initialMode={mode} />;
