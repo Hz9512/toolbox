@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 
+import { CommandMenu } from "@/components/command-menu";
 import { Header } from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -25,7 +27,7 @@ export default function RootLayout({
               <main className="min-h-[calc(100vh-4rem)] px-3 py-5 sm:px-6 lg:px-8">
                 {children}
               </main>
-              <footer className="border-t bg-background/80 px-4 py-6 text-sm text-muted-foreground backdrop-blur lg:px-8">
+              <footer className="border-t border-border/70 bg-background/70 px-4 py-6 text-sm text-muted-foreground backdrop-blur-xl lg:px-8">
                 <div className="mx-auto flex max-w-[1560px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <span>关于 Lushifu：本地优先的个人导航和工具集合。</span>
                   <span>更新日志：v0.5.0 新增网页搜索、AI 导航和壁纸入口。</span>
@@ -33,6 +35,8 @@ export default function RootLayout({
               </footer>
             </div>
           </div>
+          <CommandMenu />
+          <Toaster richColors closeButton position="top-center" />
         </ThemeProvider>
       </body>
     </html>
