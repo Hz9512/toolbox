@@ -6,6 +6,7 @@ import {
   FileText,
   ImageIcon,
   Palette,
+  Repeat,
   Scissors,
   Sparkles,
   Wand2
@@ -46,6 +47,16 @@ export const tools: Tool[] = [
     keywords: ["图片", "base64", "data url", "转换", "image"],
     status: "ready",
     icon: ImageIcon
+  },
+  {
+    id: "image-format",
+    name: "图片格式转换",
+    description: "批量将 PNG 转换为 JPG，支持质量调节、透明背景填充和 ZIP 下载。",
+    category: "image",
+    href: "/tools/image-format",
+    keywords: ["图片", "格式", "转换", "png", "jpg", "jpeg", "批量", "zip"],
+    status: "ready",
+    icon: Repeat
   },
   {
     id: "audio-lyrics",

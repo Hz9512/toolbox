@@ -13,18 +13,19 @@ import {
   Sparkles,
   Wrench
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { aiLinksStorageKey, defaultAiLinks, type AiLink } from "@/lib/ai-links";
+import { getScopedStorageKey } from "@/lib/preferences";
+import { useToolboxStore } from "@/lib/store";
 import { categories, getCategoryName, tools } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 
-function readCustomAiLinks() {
+function readCustomAiLinks(userId: string | null) {
   try {
-    const value = window.localStorage.getItem(aiLinksStorageKey);
+    const value = window.localStorage.getItem(getScopedStorageKey(aiLinksStorageKey, userId));
     return value ? (JSON.parse(value) as AiLink[]) : [];
   } catch {
-    window.localStorage.removeItem(aiLinksStorageKey);
+    window.localStorage.removeItem(getScopedStorageKey(aiLinksStorageKey, userId));
     return [];
   }
 }
@@ -35,12 +36,14 @@ function openExternal(href: string) {
 
 export function CommandMenu() {
   const router = useRouter();
+  const currentUser = useToolboxStore((state) => state.currentUser);
+  const currentUserId = currentUser?.id ?? null;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [customAiLinks, setCustomAiLinks] = useState<AiLink[]>([]);
 
   useEffect(() => {
-    setCustomAiLinks(readCustomAiLinks());
+    setCustomAiLinks(currentUser?.preferences.customAiLinks ?? readCustomAiLinks(currentUserId));
 
     function onKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -54,7 +57,7 @@ export function CommandMenu() {
     }
 
     function refreshAiLinks() {
-      setCustomAiLinks(readCustomAiLinks());
+      setCustomAiLinks(currentUser?.preferences.customAiLinks ?? readCustomAiLinks(currentUserId));
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -66,7 +69,7 @@ export function CommandMenu() {
       window.removeEventListener("lushifu:open-command", openCommandMenu);
       window.removeEventListener("lushifu:ai-links-updated", refreshAiLinks);
     };
-  }, []);
+  }, [currentUser, currentUserId]);
 
   const aiLinks = useMemo(() => [...defaultAiLinks, ...customAiLinks], [customAiLinks]);
   const keyword = search.trim();
@@ -85,7 +88,7 @@ export function CommandMenu() {
       shouldFilter
       loop
       overlayClassName="fixed inset-0 z-50 bg-background/45 backdrop-blur-md"
-      contentClassName="fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-lg border border-border/70 bg-card/95 shadow-glass backdrop-blur-2xl animate-scale-in"
+      contentClassName="cyber-panel fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-lg animate-scale-in"
       className="flex max-h-[74vh] flex-col"
     >
       <div className="flex items-center gap-3 border-b border-border/70 px-4 py-3">
@@ -117,7 +120,6 @@ export function CommandMenu() {
               onSelect={() =>
                 runCommand(() => {
                   openExternal(`https://www.bing.com/search?q=${encodeURIComponent(keyword)}`);
-                  toast.message("已打开网页搜索", { description: keyword });
                 })
               }
             />
@@ -167,8 +169,6 @@ export function CommandMenu() {
                 runCommand(() => {
                   if (tool.status === "ready") {
                     router.push(tool.href);
-                  } else {
-                    toast.info("这个工具还在规划中", { description: tool.name });
                   }
                 })
               }
@@ -234,11 +234,11 @@ function CommandItem({
       keywords={keywords}
       onSelect={onSelect}
       className={cn(
-        "group flex cursor-pointer items-center gap-3 rounded-md px-3 py-3 text-sm outline-none transition-colors",
-        "aria-selected:bg-accent aria-selected:text-accent-foreground"
+        "group flex cursor-pointer items-center gap-3 rounded-md px-3 py-3 text-sm outline-none transition-all",
+        "aria-selected:bg-accent aria-selected:text-accent-foreground aria-selected:shadow-[0_0_22px_hsl(var(--primary)/0.12)]"
       )}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background/80 text-muted-foreground shadow-sm transition-colors group-aria-selected:border-primary/30 group-aria-selected:text-primary">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background/80 text-muted-foreground shadow-sm transition-colors group-aria-selected:border-primary/30 group-aria-selected:text-primary dark:border-cyan-400/14 dark:bg-[#101115]/78">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">

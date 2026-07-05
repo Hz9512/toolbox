@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Toaster } from "sonner";
 
 import { CommandMenu } from "@/components/command-menu";
 import { Header } from "@/components/header";
@@ -36,7 +35,6 @@ export default function RootLayout({
             </div>
           </div>
           <CommandMenu />
-          <Toaster richColors closeButton position="top-center" />
         </ThemeProvider>
       </body>
     </html>

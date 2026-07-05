@@ -13,8 +13,8 @@ export function ToolCard({ tool }: { tool: Tool }) {
 
   const content = (
     <>
-      <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent opacity-70" />
-      <div className="absolute -right-14 -top-14 h-32 w-32 rounded-full bg-primary/[0.08] blur-2xl transition-all duration-500 group-hover:bg-primary/[0.16]" />
+      <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/45 to-transparent opacity-70" />
+      <div className="absolute -right-14 -top-14 h-32 w-32 rounded-full bg-cyan-400/[0.08] blur-2xl transition-all duration-500 group-hover:bg-cyan-400/[0.2]" />
 
       <div className="relative flex items-start justify-between gap-3">
         <div
@@ -22,7 +22,7 @@ export function ToolCard({ tool }: { tool: Tool }) {
             "flex h-12 w-12 items-center justify-center rounded-lg border shadow-sm transition-all duration-300",
             disabled
               ? "border-border/70 bg-muted/70 text-muted-foreground"
-              : "border-border/70 bg-background/80 text-primary group-hover:-translate-y-0.5 group-hover:border-primary/35 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-glow"
+              : "border-border/70 bg-background/80 text-primary group-hover:-translate-y-0.5 group-hover:border-cyan-300/55 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-glow dark:border-cyan-400/16 dark:bg-[#101115]/80"
           )}
         >
           <Icon className="h-5 w-5" />
@@ -76,8 +76,8 @@ export function ToolCard({ tool }: { tool: Tool }) {
   );
 
   const className = cn(
-    "surface-noise group relative flex min-h-[190px] w-full min-w-0 flex-col overflow-hidden rounded-lg p-4 transition-all duration-300",
-    "glass-panel hover:-translate-y-1 hover:border-primary/35 hover:shadow-glass",
+    "surface-noise cyber-panel cyber-glow group relative flex min-h-[190px] w-full min-w-0 flex-col overflow-hidden rounded-lg p-4 transition-all duration-300",
+    "hover:-translate-y-1 hover:border-primary/35 hover:shadow-glass",
     disabled && "opacity-[0.86]"
   );
 
