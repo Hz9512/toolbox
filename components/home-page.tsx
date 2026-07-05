@@ -2,7 +2,6 @@
 
 import {
   ChangeEvent,
-  type CSSProperties,
   FormEvent,
   type ReactNode,
   useEffect,
@@ -37,8 +36,7 @@ import {
   cacheUserPreferences,
   getWallpaperBlobKey,
   getScopedStorageKey,
-  searchEngineStorageKey,
-  wallpaperOpacityStorageKey
+  searchEngineStorageKey
 } from "@/lib/preferences";
 import { useToolboxStore } from "@/lib/store";
 import { categories, CategoryId, tools } from "@/lib/tools";
@@ -56,7 +54,7 @@ type WallpaperItem = {
 const customWallpaperDbName = "lushifu-wallpaper";
 const customWallpaperStoreName = "wallpapers";
 const maxStoredWallpaperLength = 3_500_000;
-const defaultWallpaperOpacity = 60;
+const wallpaperOverlayOpacity = 85;
 
 const searchEngines: Array<{
   id: SearchEngineId;
@@ -297,7 +295,6 @@ export function HomePage({
   const [newAiUrl, setNewAiUrl] = useState("");
   const [wallpaperId, setWallpaperId] = useState("default");
   const [customWallpaper, setCustomWallpaper] = useState("");
-  const [wallpaperOpacity, setWallpaperOpacity] = useState(defaultWallpaperOpacity);
   const [showWallpapers, setShowWallpapers] = useState(false);
   const [showEngines, setShowEngines] = useState(false);
   const [isWallpaperUploading, setIsWallpaperUploading] = useState(false);
@@ -308,7 +305,6 @@ export function HomePage({
   const aiLinksKey = getScopedStorageKey(aiLinksStorageKey, currentUserId);
   const wallpaperKey = getScopedStorageKey(customWallpaperStorageKey, currentUserId);
   const wallpaperIdKey = getScopedStorageKey(customWallpaperIdStorageKey, currentUserId);
-  const wallpaperOpacityKey = getScopedStorageKey(wallpaperOpacityStorageKey, currentUserId);
   const searchEngineKey = getScopedStorageKey(searchEngineStorageKey, currentUserId);
   const wallpaperBlobKey = getWallpaperBlobKey(currentUserId);
 
@@ -331,7 +327,6 @@ export function HomePage({
       setCustomAiLinks(preferences.customAiLinks);
       setWallpaperId(preferences.wallpaperId);
       replaceCustomWallpaper(preferences.customWallpaper);
-      setWallpaperOpacity(preferences.wallpaperOpacity);
       setEngine(preferences.searchEngine);
       window.setTimeout(() => {
         isHydratingPreferencesRef.current = false;
@@ -346,7 +341,6 @@ export function HomePage({
     const savedLinks = window.localStorage.getItem(aiLinksKey);
     const savedWallpaper = window.localStorage.getItem(wallpaperKey);
     const savedWallpaperId = window.localStorage.getItem(wallpaperIdKey);
-    const savedWallpaperOpacity = window.localStorage.getItem(wallpaperOpacityKey);
     const savedSearchEngine = window.localStorage.getItem(searchEngineKey) as SearchEngineId | null;
 
     if (savedLinks) {
@@ -392,15 +386,6 @@ export function HomePage({
       replaceCustomWallpaper("");
     }
 
-    if (savedWallpaperOpacity) {
-      const opacity = Number(savedWallpaperOpacity);
-      if (Number.isFinite(opacity)) {
-        setWallpaperOpacity(Math.min(85, Math.max(15, opacity)));
-      }
-    } else {
-      setWallpaperOpacity(defaultWallpaperOpacity);
-    }
-
     if (savedSearchEngine && searchEngines.some((item) => item.id === savedSearchEngine)) {
       setEngine(savedSearchEngine);
     } else {
@@ -419,8 +404,7 @@ export function HomePage({
     searchEngineKey,
     wallpaperBlobKey,
     wallpaperIdKey,
-    wallpaperKey,
-    wallpaperOpacityKey
+    wallpaperKey
   ]);
 
   useEffect(() => {
@@ -430,13 +414,6 @@ export function HomePage({
       }
     };
   }, []);
-
-  useEffect(() => {
-    safeSetLocalStorage(wallpaperOpacityKey, String(wallpaperOpacity));
-    if (!isHydratingPreferencesRef.current) {
-      savePreferences({ wallpaperOpacity }).catch(() => {});
-    }
-  }, [savePreferences, wallpaperOpacity, wallpaperOpacityKey]);
 
   useEffect(() => {
     safeSetLocalStorage(searchEngineKey, engine);
@@ -589,11 +566,6 @@ export function HomePage({
     }
   }
 
-  function updateWallpaperOpacity(value: number) {
-    const nextOpacity = Math.min(85, Math.max(15, value));
-    setWallpaperOpacity(nextOpacity);
-  }
-
   async function uploadWallpaper(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
@@ -644,8 +616,8 @@ export function HomePage({
       />
       {selectedWallpaper ? (
         <div
-          className="pointer-events-none fixed inset-0 z-0 transition-colors duration-150"
-          style={{ backgroundColor: `hsl(var(--background) / ${wallpaperOpacity / 100})` }}
+          className="pointer-events-none fixed inset-0 z-0"
+          style={{ backgroundColor: `hsl(var(--background) / ${wallpaperOverlayOpacity / 100})` }}
         />
       ) : null}
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/0.2),transparent_30rem),radial-gradient(circle_at_80%_10%,rgb(168_85_247/0.16),transparent_28rem),radial-gradient(circle_at_50%_115%,rgb(6_182_212/0.12),transparent_34rem)]" />
@@ -686,10 +658,8 @@ export function HomePage({
             {showWallpapers ? (
               <WallpaperPanel
                 wallpaperId={wallpaperId}
-                wallpaperOpacity={wallpaperOpacity}
                 isUploading={isWallpaperUploading}
                 onSelect={selectWallpaper}
-                onOpacityChange={updateWallpaperOpacity}
                 onUpload={uploadWallpaper}
               />
             ) : null}
@@ -970,17 +940,13 @@ function AiCard({ link }: { link: AiLink }) {
 
 function WallpaperPanel({
   wallpaperId,
-  wallpaperOpacity,
   isUploading,
   onSelect,
-  onOpacityChange,
   onUpload
 }: {
   wallpaperId: string;
-  wallpaperOpacity: number;
   isUploading: boolean;
   onSelect: (id: string, image: string) => void;
-  onOpacityChange: (value: number) => void;
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
@@ -1039,28 +1005,6 @@ function WallpaperPanel({
           <div className="mt-2 text-center text-sm font-medium text-muted-foreground">上传图片</div>
           <input type="file" accept="image/*" className="hidden" onChange={onUpload} disabled={isUploading} />
         </label>
-      </div>
-      <div className="mt-5 rounded-lg border border-border/65 bg-background/55 p-4 shadow-inner dark:border-cyan-400/10 dark:bg-black/18">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Wallpaper className="h-4 w-4 text-primary" />
-            <span>壁纸透明度</span>
-          </div>
-          <span className="rounded-full border border-border/70 bg-card/80 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            {wallpaperOpacity}%
-          </span>
-        </div>
-        <input
-          type="range"
-          min={15}
-          max={85}
-          step={1}
-          value={wallpaperOpacity}
-          onChange={(event) => onOpacityChange(Number(event.target.value))}
-          className="wallpaper-opacity-slider h-4 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary outline-none [background:linear-gradient(90deg,hsl(var(--primary))_var(--wallpaper-opacity),hsl(var(--muted))_var(--wallpaper-opacity))]"
-          style={{ "--wallpaper-opacity": `${((wallpaperOpacity - 15) / 70) * 100}%` } as CSSProperties}
-          aria-label="壁纸透明度"
-        />
       </div>
     </div>
   );

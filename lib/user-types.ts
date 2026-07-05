@@ -31,6 +31,6 @@ export const defaultUserPreferences: UserPreferences = {
   customAiLinks: [],
   wallpaperId: "default",
   customWallpaper: "",
-  wallpaperOpacity: 60,
+  wallpaperOpacity: 85,
   searchEngine: "bing"
 };
