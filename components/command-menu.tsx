@@ -154,26 +154,24 @@ export function CommandMenu() {
         </Command.Group>
 
         <Command.Group heading="工具" className="cmdk-group">
-          {tools.map((tool) => (
-            <CommandItem
-              key={tool.id}
-              value={`tool-${tool.id}-${tool.name}`}
-              keywords={[tool.name, tool.description, getCategoryName(tool.category), ...tool.keywords]}
-              icon={tool.icon}
-              title={tool.name}
-              description={`${getCategoryName(tool.category)} · ${
-                tool.status === "ready" ? "可直接打开" : "规划中"
-              }`}
-              trailing={tool.status === "ready" ? <ArrowUpRight className="h-4 w-4" /> : "Soon"}
-              onSelect={() =>
-                runCommand(() => {
-                  if (tool.status === "ready") {
+          {tools
+            .filter((tool) => tool.status === "ready")
+            .map((tool) => (
+              <CommandItem
+                key={tool.id}
+                value={`tool-${tool.id}-${tool.name}`}
+                keywords={[tool.name, tool.description, getCategoryName(tool.category), ...tool.keywords]}
+                icon={tool.icon}
+                title={tool.name}
+                description={`${getCategoryName(tool.category)} · 可直接打开`}
+                trailing={<ArrowUpRight className="h-4 w-4" />}
+                onSelect={() =>
+                  runCommand(() => {
                     router.push(tool.href);
-                  }
-                })
-              }
-            />
-          ))}
+                  })
+                }
+              />
+            ))}
         </Command.Group>
 
         <Command.Group heading="AI" className="cmdk-group">

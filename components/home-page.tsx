@@ -41,6 +41,7 @@ import {
 import { useToolboxStore } from "@/lib/store";
 import { categories, CategoryId, tools } from "@/lib/tools";
 import { cn } from "@/lib/utils";
+import { defaultWebLinks, webLinksStorageKey, type WebLink } from "@/lib/web-links";
 
 type SearchMode = "web" | "ai" | "tools";
 type SearchEngineId = "bing" | "baidu" | "sogou";
@@ -54,7 +55,7 @@ type WallpaperItem = {
 const customWallpaperDbName = "lushifu-wallpaper";
 const customWallpaperStoreName = "wallpapers";
 const maxStoredWallpaperLength = 3_500_000;
-const wallpaperOverlayOpacity = 85;
+const wallpaperOverlayOpacity = 78;
 
 const searchEngines: Array<{
   id: SearchEngineId;
@@ -88,25 +89,25 @@ const wallpapers: WallpaperItem[] = [
     id: "forest",
     name: "森林",
     image:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=5120&q=100"
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=2400&q=86"
   },
   {
     id: "mountain",
     name: "山脊",
     image:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=5120&q=100"
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=86"
   },
   {
     id: "ocean",
     name: "海岸",
     image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=5120&q=100"
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2400&q=86"
   },
   {
     id: "night",
     name: "星空",
     image:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=5120&q=100"
+      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2400&q=86"
   }
 ];
 
@@ -122,6 +123,13 @@ function matchesTool(query: string, tool: (typeof tools)[number]) {
 }
 
 function matchesAiLink(query: string, link: AiLink) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return true;
+
+  return [link.name, link.description, link.href].join(" ").toLowerCase().includes(normalized);
+}
+
+function matchesWebLink(query: string, link: WebLink) {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return true;
 
@@ -290,9 +298,13 @@ export function HomePage({
   const [category, setCategory] = useState<CategoryId>(initialCategory);
   const [engine, setEngine] = useState<SearchEngineId>("bing");
   const [customAiLinks, setCustomAiLinks] = useState<AiLink[]>([]);
+  const [customWebLinks, setCustomWebLinks] = useState<WebLink[]>([]);
   const [showAddAi, setShowAddAi] = useState(false);
+  const [showAddWeb, setShowAddWeb] = useState(false);
   const [newAiName, setNewAiName] = useState("");
   const [newAiUrl, setNewAiUrl] = useState("");
+  const [newWebName, setNewWebName] = useState("");
+  const [newWebUrl, setNewWebUrl] = useState("");
   const [wallpaperId, setWallpaperId] = useState("default");
   const [customWallpaper, setCustomWallpaper] = useState("");
   const [showWallpapers, setShowWallpapers] = useState(false);
@@ -301,8 +313,10 @@ export function HomePage({
   const wallpaperPanelRef = useRef<HTMLDivElement>(null);
   const engineMenuRef = useRef<HTMLDivElement>(null);
   const customWallpaperObjectUrlRef = useRef<string | null>(null);
+  const wallpaperPreloadRef = useRef<HTMLImageElement[]>([]);
   const isHydratingPreferencesRef = useRef(false);
   const aiLinksKey = getScopedStorageKey(aiLinksStorageKey, currentUserId);
+  const webLinksKey = getScopedStorageKey(webLinksStorageKey, currentUserId);
   const wallpaperKey = getScopedStorageKey(customWallpaperStorageKey, currentUserId);
   const wallpaperIdKey = getScopedStorageKey(customWallpaperIdStorageKey, currentUserId);
   const searchEngineKey = getScopedStorageKey(searchEngineStorageKey, currentUserId);
@@ -324,7 +338,8 @@ export function HomePage({
       const preferences = currentUser.preferences;
       isHydratingPreferencesRef.current = true;
       cacheUserPreferences(currentUser.id, preferences);
-      setCustomAiLinks(preferences.customAiLinks);
+      setCustomAiLinks(preferences.customAiLinks ?? []);
+      setCustomWebLinks(preferences.customWebLinks ?? []);
       setWallpaperId(preferences.wallpaperId);
       replaceCustomWallpaper(preferences.customWallpaper);
       setEngine(preferences.searchEngine);
@@ -339,6 +354,7 @@ export function HomePage({
 
     isHydratingPreferencesRef.current = true;
     const savedLinks = window.localStorage.getItem(aiLinksKey);
+    const savedWebLinks = window.localStorage.getItem(webLinksKey);
     const savedWallpaper = window.localStorage.getItem(wallpaperKey);
     const savedWallpaperId = window.localStorage.getItem(wallpaperIdKey);
     const savedSearchEngine = window.localStorage.getItem(searchEngineKey) as SearchEngineId | null;
@@ -351,6 +367,16 @@ export function HomePage({
       }
     } else {
       setCustomAiLinks([]);
+    }
+
+    if (savedWebLinks) {
+      try {
+        setCustomWebLinks(JSON.parse(savedWebLinks) as WebLink[]);
+      } catch {
+        window.localStorage.removeItem(webLinksKey);
+      }
+    } else {
+      setCustomWebLinks([]);
     }
 
     if (savedWallpaperId) {
@@ -402,6 +428,7 @@ export function HomePage({
     aiLinksKey,
     currentUser,
     searchEngineKey,
+    webLinksKey,
     wallpaperBlobKey,
     wallpaperIdKey,
     wallpaperKey
@@ -413,6 +440,21 @@ export function HomePage({
         URL.revokeObjectURL(customWallpaperObjectUrlRef.current);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      wallpaperPreloadRef.current = wallpapers
+        .filter((wallpaper) => wallpaper.image)
+        .map((wallpaper) => {
+          const image = new Image();
+          image.decoding = "async";
+          image.src = wallpaper.image;
+          return image;
+        });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -457,6 +499,7 @@ export function HomePage({
   }, [showEngines]);
 
   const allAiLinks = useMemo(() => [...defaultAiLinks, ...customAiLinks], [customAiLinks]);
+  const allWebLinks = useMemo(() => [...defaultWebLinks, ...customWebLinks], [customWebLinks]);
   const selectedEngine = searchEngines.find((item) => item.id === engine) ?? searchEngines[0];
   const selectedWallpaper =
     wallpaperId === "custom"
@@ -466,7 +509,7 @@ export function HomePage({
   const filteredTools = useMemo(() => {
     return tools.filter((tool) => {
       const categoryMatch = category === "all" || tool.category === category;
-      return categoryMatch && matchesTool(query, tool);
+      return tool.status === "ready" && categoryMatch && matchesTool(query, tool);
     });
   }, [category, query]);
 
@@ -474,7 +517,10 @@ export function HomePage({
     return allAiLinks.filter((link) => matchesAiLink(query, link));
   }, [allAiLinks, query]);
 
-  const readyCount = filteredTools.filter((tool) => tool.status === "ready").length;
+  const filteredWebLinks = useMemo(() => {
+    return allWebLinks.filter((link) => matchesWebLink(query, link));
+  }, [allWebLinks, query]);
+
   const selectedCategory = categories.find((item) => item.id === category)?.name ?? "全部";
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
@@ -535,6 +581,34 @@ export function HomePage({
     setNewAiName("");
     setNewAiUrl("");
     setShowAddAi(false);
+  }
+
+  function addWebLink(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const name = newWebName.trim();
+    const href = normalizeUrl(newWebUrl);
+    if (!name || !href) {
+      return;
+    }
+
+    const nextLinks = [
+      ...customWebLinks,
+      {
+        id: `custom-${Date.now()}`,
+        name,
+        href,
+        description: "自定义常用网站入口。",
+        accent: "from-cyan-500/20 to-teal-500/10"
+      }
+    ];
+
+    setCustomWebLinks(nextLinks);
+    window.localStorage.setItem(webLinksKey, JSON.stringify(nextLinks));
+    savePreferences({ customWebLinks: nextLinks }).catch(() => {});
+    setNewWebName("");
+    setNewWebUrl("");
+    setShowAddWeb(false);
   }
 
   function replaceCustomWallpaper(image: string) {
@@ -790,6 +864,65 @@ export function HomePage({
           </div>
         </section>
 
+        {mode === "web" ? (
+          <section className="mt-8 sm:mt-10">
+            <SectionHeader
+              title="常用网站"
+              description={`当前显示 ${filteredWebLinks.length} 个常用网站，可直接打开。`}
+              action={
+                <Button
+                  type="button"
+                  size="sm"
+                  className="teal-gradient w-fit rounded-full text-white shadow-sm shadow-teal-500/20"
+                  onClick={() => setShowAddWeb((value) => !value)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  添加
+                </Button>
+              }
+            />
+
+            {showAddWeb ? (
+              <form
+                onSubmit={addWebLink}
+                className="cyber-panel mb-4 grid gap-3 rounded-lg p-4 md:grid-cols-[1fr_1.6fr_auto]"
+              >
+                <Input
+                  value={newWebName}
+                  onChange={(event) => setNewWebName(event.target.value)}
+                  placeholder="名称，例如：我的网站"
+                  className="h-11 bg-background/80"
+                />
+                <Input
+                  value={newWebUrl}
+                  onChange={(event) => setNewWebUrl(event.target.value)}
+                  placeholder="网址，例如：https://example.com"
+                  className="h-11 bg-background/80"
+                />
+                <Button type="submit" className="h-11">
+                  <Plus className="mr-2 h-4 w-4" />
+                  添加
+                </Button>
+              </form>
+            ) : null}
+
+            {filteredWebLinks.length > 0 ? (
+              <div className="ai-card-grid w-full min-w-0">
+                {filteredWebLinks.map((link) => (
+                  <LinkCard key={link.id} link={link} fallbackIcon={Globe2} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="没有匹配的常用网站"
+                description="换一个关键词试试，或添加一个新的自定义网站。"
+                actionLabel="添加网站"
+                onAction={() => setShowAddWeb(true)}
+              />
+            )}
+          </section>
+        ) : null}
+
         {mode === "ai" ? (
           <section className="mt-8 sm:mt-10">
             <SectionHeader
@@ -835,7 +968,7 @@ export function HomePage({
             {filteredAiLinks.length > 0 ? (
               <div className="ai-card-grid w-full min-w-0">
                 {filteredAiLinks.map((link) => (
-                  <AiCard key={link.id} link={link} />
+                  <LinkCard key={link.id} link={link} fallbackIcon={Bot} />
                 ))}
               </div>
             ) : (
@@ -853,7 +986,7 @@ export function HomePage({
           <section className="mt-8 sm:mt-10">
             <SectionHeader
               title="工具导航"
-              description={`当前显示 ${filteredTools.length} 个工具，其中 ${readyCount} 个可直接打开使用。`}
+              description={`当前显示 ${filteredTools.length} 个可用工具。`}
               action={
             <span className="cyber-panel w-fit rounded-full px-3 py-1 text-sm font-medium text-muted-foreground">
                   {selectedCategory}
@@ -905,7 +1038,13 @@ function SectionHeader({
   );
 }
 
-function AiCard({ link }: { link: AiLink }) {
+function LinkCard({
+  link,
+  fallbackIcon: Icon
+}: {
+  link: AiLink | WebLink;
+  fallbackIcon: typeof Search;
+}) {
   const logo = link.logo ?? getFaviconUrl(link.href);
 
   return (
@@ -921,7 +1060,7 @@ function AiCard({ link }: { link: AiLink }) {
     >
       <div className="absolute inset-0 bg-card/72 backdrop-blur-xl transition-colors duration-300 group-hover:bg-card/62 dark:bg-[#121214]/76 dark:group-hover:bg-[#121214]/66" />
       <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-background/90 text-primary shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-primary/30 group-hover:shadow-md">
-        <Bot className="h-4 w-4" />
+        <Icon className="h-4 w-4" />
         {logo ? (
           <span
             className="absolute inset-0 bg-background bg-[length:66%_66%] bg-center bg-no-repeat"

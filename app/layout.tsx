@@ -26,10 +26,16 @@ export default function RootLayout({
               <main className="min-h-[calc(100vh-4rem)] px-3 py-5 sm:px-6 lg:px-8">
                 {children}
               </main>
-              <footer className="border-t border-border/70 bg-background/70 px-4 py-6 text-sm text-muted-foreground backdrop-blur-xl lg:px-8">
-                <div className="mx-auto flex max-w-[1560px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <span>关于 Lushifu：本地优先的个人导航和工具集合。</span>
-                  <span>更新日志：v0.5.0 新增网页搜索、AI 导航和壁纸入口。</span>
+              <footer className="border-t border-border/70 bg-background/80 px-4 py-7 text-center backdrop-blur-xl lg:px-8">
+                <div className="mx-auto flex max-w-[1560px] items-center justify-center">
+                  <a
+                    href="https://beian.miit.gov.cn/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full border border-border/70 bg-card/70 px-4 py-2 text-sm font-medium tracking-wide text-muted-foreground shadow-sm transition-colors hover:border-primary/25 hover:text-foreground"
+                  >
+                    沪ICP备2026030486号
+                  </a>
                 </div>
               </footer>
             </div>

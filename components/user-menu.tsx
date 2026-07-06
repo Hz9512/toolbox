@@ -104,7 +104,7 @@ export function UserMenu() {
                 {currentUser ? currentUser.name : mode === "login" ? "用户登录" : "创建用户"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {currentUser ? "个性化配置会同步到账号。" : "登录后可跨设备同步配置。"}
+                {currentUser ? "个性化配置会保存到当前账号。" : "登录后配置会保存到当前服务端账号。"}
               </p>
             </div>
             <Button
@@ -122,7 +122,7 @@ export function UserMenu() {
           {currentUser ? (
             <div className="grid gap-3">
               <div className="rounded-lg border border-border/70 bg-background/70 p-3 text-sm text-muted-foreground">
-                当前主题、AI 入口、搜索引擎和壁纸会保存到服务端，换台电脑登录也会生效。
+                当前主题、AI 入口、搜索引擎和壁纸会保存到服务端。多台电脑访问同一个部署地址时，登录同一账号即可生效。
               </div>
               <Button
                 type="button"

@@ -27,7 +27,9 @@ type UserDatabase = {
   users: StoredUser[];
 };
 
-const dataDirectory = path.join(process.cwd(), ".toolbox-data");
+const dataDirectory = process.env.TOOLBOX_DATA_DIR
+  ? path.resolve(process.env.TOOLBOX_DATA_DIR)
+  : path.join(process.cwd(), ".toolbox-data");
 const databasePath = path.join(dataDirectory, "users.json");
 
 function normalizeUserName(name: string) {
@@ -80,6 +82,7 @@ function mergePreferences(preferences?: Partial<UserPreferences>): UserPreferenc
     ...defaultUserPreferences,
     ...preferences,
     customAiLinks: Array.isArray(preferences?.customAiLinks) ? preferences.customAiLinks : [],
+    customWebLinks: Array.isArray(preferences?.customWebLinks) ? preferences.customWebLinks : [],
     wallpaperOpacity:
       typeof preferences?.wallpaperOpacity === "number"
         ? Math.min(85, Math.max(15, preferences.wallpaperOpacity))
@@ -147,7 +150,11 @@ export async function loginUser(name: string, password: string) {
   );
 
   if (!user) {
-    return { ok: false, message: "没有找到这个用户。" };
+    return {
+      ok: false,
+      message:
+        "没有找到这个用户。请确认当前设备访问的是同一个已部署站点；如果是在本机分别运行，账号数据不会自动同步。"
+    };
   }
 
   if (!safeEqual(hashSecret(password, user.passwordSalt), user.passwordHash)) {

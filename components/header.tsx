@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, Github, Globe2, Home, Plus, Wrench } from "lucide-react";
+import { Bot, Github, Globe2, Home, Wrench } from "lucide-react";
 
 import { MobileNav } from "@/components/mobile-nav";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -16,7 +16,7 @@ export function Header() {
             <span className="brand-gradient bg-clip-text text-transparent">Lushifu</span>
             <span className="ml-1 inline-block h-1.5 w-1.5 -translate-y-2 rounded-full bg-primary sm:h-2 sm:w-2" />
           </Link>
-          <nav className="ml-3 hidden items-center gap-1 rounded-full border border-border/70 bg-background/90 p-1 shadow-sm backdrop-blur-xl md:flex dark:border-cyan-400/20 dark:bg-black/30">
+          <nav className="ml-3 hidden items-center gap-1 md:flex">
             <Link
               href="/"
               className="cyber-button inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-foreground/80 transition-colors hover:bg-foreground/10 hover:text-foreground dark:text-cyan-50/80 dark:hover:text-white"
@@ -53,12 +53,6 @@ export function Header() {
               <Github className="mr-2 h-4 w-4" />
               GitHub
             </a>
-          </Button>
-          <Button size="sm" className="teal-gradient cyber-glow rounded-full px-3 text-white shadow-sm shadow-teal-500/20 sm:px-4" asChild>
-            <Link href="/tools/image-base64">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">开始使用</span>
-            </Link>
           </Button>
           <UserMenu />
           <div className="hidden sm:block">

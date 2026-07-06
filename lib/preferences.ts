@@ -2,6 +2,7 @@
 
 import { aiLinksStorageKey, type AiLink } from "@/lib/ai-links";
 import { defaultUserPreferences, type SearchEngineId, type ThemeMode, type UserPreferences } from "@/lib/user-types";
+import { webLinksStorageKey, type WebLink } from "@/lib/web-links";
 
 export const customWallpaperStorageKey = "lushifu.wallpaper";
 export const customWallpaperIdStorageKey = "lushifu.wallpaperId";
@@ -13,6 +14,7 @@ const customWallpaperDbKey = "custom";
 
 const userScopedStorageKeys = [
   aiLinksStorageKey,
+  webLinksStorageKey,
   customWallpaperStorageKey,
   customWallpaperIdStorageKey,
   wallpaperOpacityStorageKey,
@@ -91,6 +93,7 @@ export async function readLocalPreferences(
   theme: ThemeMode
 ): Promise<UserPreferences> {
   const aiLinksKey = getScopedStorageKey(aiLinksStorageKey, userId);
+  const webLinksKey = getScopedStorageKey(webLinksStorageKey, userId);
   const wallpaperKey = getScopedStorageKey(customWallpaperStorageKey, userId);
   const wallpaperIdKey = getScopedStorageKey(customWallpaperIdStorageKey, userId);
   const wallpaperOpacityKey = getScopedStorageKey(wallpaperOpacityStorageKey, userId);
@@ -105,6 +108,7 @@ export async function readLocalPreferences(
   return {
     theme,
     customAiLinks: readJson<AiLink[]>(aiLinksKey, []),
+    customWebLinks: readJson<WebLink[]>(webLinksKey, []),
     wallpaperId,
     customWallpaper,
     wallpaperOpacity: readBoundedNumber(wallpaperOpacityKey, defaultUserPreferences.wallpaperOpacity),
@@ -116,6 +120,10 @@ export function cacheUserPreferences(userId: string | null, preferences: UserPre
   window.localStorage.setItem(
     getScopedStorageKey(aiLinksStorageKey, userId),
     JSON.stringify(preferences.customAiLinks)
+  );
+  window.localStorage.setItem(
+    getScopedStorageKey(webLinksStorageKey, userId),
+    JSON.stringify(preferences.customWebLinks)
   );
   window.localStorage.setItem(
     getScopedStorageKey(customWallpaperIdStorageKey, userId),

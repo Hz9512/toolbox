@@ -1,4 +1,5 @@
 import type { AiLink } from "@/lib/ai-links";
+import type { WebLink } from "@/lib/web-links";
 
 export type ThemeMode = "system" | "light" | "dark";
 export type SearchEngineId = "bing" | "baidu" | "sogou";
@@ -6,6 +7,7 @@ export type SearchEngineId = "bing" | "baidu" | "sogou";
 export type UserPreferences = {
   theme: ThemeMode;
   customAiLinks: AiLink[];
+  customWebLinks: WebLink[];
   wallpaperId: string;
   customWallpaper: string;
   wallpaperOpacity: number;
@@ -29,6 +31,7 @@ export type AuthResult = {
 export const defaultUserPreferences: UserPreferences = {
   theme: "system",
   customAiLinks: [],
+  customWebLinks: [],
   wallpaperId: "default",
   customWallpaper: "",
   wallpaperOpacity: 85,
