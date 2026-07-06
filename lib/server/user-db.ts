@@ -82,7 +82,11 @@ function mergePreferences(preferences?: Partial<UserPreferences>): UserPreferenc
     ...defaultUserPreferences,
     ...preferences,
     customAiLinks: Array.isArray(preferences?.customAiLinks) ? preferences.customAiLinks : [],
+    aiLinkOrder: Array.isArray(preferences?.aiLinkOrder) ? preferences.aiLinkOrder : [],
+    hiddenAiLinkIds: Array.isArray(preferences?.hiddenAiLinkIds) ? preferences.hiddenAiLinkIds : [],
     customWebLinks: Array.isArray(preferences?.customWebLinks) ? preferences.customWebLinks : [],
+    webLinkOrder: Array.isArray(preferences?.webLinkOrder) ? preferences.webLinkOrder : [],
+    hiddenWebLinkIds: Array.isArray(preferences?.hiddenWebLinkIds) ? preferences.hiddenWebLinkIds : [],
     wallpaperOpacity:
       typeof preferences?.wallpaperOpacity === "number"
         ? Math.min(85, Math.max(15, preferences.wallpaperOpacity))

@@ -2,6 +2,7 @@
 
 import {
   ChangeEvent,
+  DragEvent,
   FormEvent,
   type ReactNode,
   useEffect,
@@ -29,7 +30,13 @@ import {
 import { ToolCard } from "@/components/tool-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { aiLinksStorageKey, defaultAiLinks, type AiLink } from "@/lib/ai-links";
+import {
+  aiLinkOrderStorageKey,
+  aiLinksStorageKey,
+  defaultAiLinks,
+  hiddenAiLinksStorageKey,
+  type AiLink
+} from "@/lib/ai-links";
 import {
   customWallpaperIdStorageKey,
   customWallpaperStorageKey,
@@ -41,7 +48,13 @@ import {
 import { useToolboxStore } from "@/lib/store";
 import { categories, CategoryId, tools } from "@/lib/tools";
 import { cn } from "@/lib/utils";
-import { defaultWebLinks, webLinksStorageKey, type WebLink } from "@/lib/web-links";
+import {
+  defaultWebLinks,
+  hiddenWebLinksStorageKey,
+  webLinkOrderStorageKey,
+  webLinksStorageKey,
+  type WebLink
+} from "@/lib/web-links";
 
 type SearchMode = "web" | "ai" | "tools";
 type SearchEngineId = "bing" | "baidu" | "sogou";
@@ -50,7 +63,11 @@ type WallpaperItem = {
   id: string;
   name: string;
   image: string;
+  preview?: string;
 };
+
+type LinkKind = "ai" | "web";
+type ManagedLink = AiLink | WebLink;
 
 const customWallpaperDbName = "lushifu-wallpaper";
 const customWallpaperStoreName = "wallpapers";
@@ -89,25 +106,33 @@ const wallpapers: WallpaperItem[] = [
     id: "forest",
     name: "森林",
     image:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=2400&q=86"
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=2400&q=86",
+    preview:
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=640&q=64"
   },
   {
     id: "mountain",
     name: "山脊",
     image:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=86"
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=86",
+    preview:
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=640&q=64"
   },
   {
     id: "ocean",
     name: "海岸",
     image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2400&q=86"
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2400&q=86",
+    preview:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=640&q=64"
   },
   {
     id: "night",
     name: "星空",
     image:
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2400&q=86"
+      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2400&q=86",
+    preview:
+      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=640&q=64"
   }
 ];
 
@@ -158,6 +183,55 @@ function safeSetLocalStorage(key: string, value: string) {
   } catch {
     return false;
   }
+}
+
+function readJson<T>(key: string, fallback: T) {
+  try {
+    const value = window.localStorage.getItem(key);
+    return value ? (JSON.parse(value) as T) : fallback;
+  } catch {
+    window.localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
+function mergeLinks<T extends ManagedLink>(
+  defaultLinks: T[],
+  customLinks: T[],
+  order: string[],
+  hiddenIds: string[]
+) {
+  const hidden = new Set(hiddenIds);
+  const byId = new Map([...defaultLinks, ...customLinks].map((link) => [link.id, link] as const));
+  const ordered = order
+    .map((id) => byId.get(id))
+    .filter((link): link is T => {
+      if (!link) {
+        return false;
+      }
+
+      return !hidden.has(link.id);
+    });
+  const orderedIds = new Set(ordered.map((link) => link.id));
+  const rest = [...defaultLinks, ...customLinks].filter(
+    (link) => !hidden.has(link.id) && !orderedIds.has(link.id)
+  );
+
+  return [...ordered, ...rest];
+}
+
+function moveId(ids: string[], draggedId: string, targetId: string) {
+  if (draggedId === targetId) return ids;
+
+  const withoutDragged = ids.filter((id) => id !== draggedId);
+  const targetIndex = withoutDragged.indexOf(targetId);
+  if (targetIndex < 0) return ids;
+
+  return [
+    ...withoutDragged.slice(0, targetIndex),
+    draggedId,
+    ...withoutDragged.slice(targetIndex)
+  ];
 }
 
 function readFileAsDataUrl(file: File) {
@@ -298,7 +372,11 @@ export function HomePage({
   const [category, setCategory] = useState<CategoryId>(initialCategory);
   const [engine, setEngine] = useState<SearchEngineId>("bing");
   const [customAiLinks, setCustomAiLinks] = useState<AiLink[]>([]);
+  const [aiLinkOrder, setAiLinkOrder] = useState<string[]>([]);
+  const [hiddenAiLinkIds, setHiddenAiLinkIds] = useState<string[]>([]);
   const [customWebLinks, setCustomWebLinks] = useState<WebLink[]>([]);
+  const [webLinkOrder, setWebLinkOrder] = useState<string[]>([]);
+  const [hiddenWebLinkIds, setHiddenWebLinkIds] = useState<string[]>([]);
   const [showAddAi, setShowAddAi] = useState(false);
   const [showAddWeb, setShowAddWeb] = useState(false);
   const [newAiName, setNewAiName] = useState("");
@@ -313,10 +391,13 @@ export function HomePage({
   const wallpaperPanelRef = useRef<HTMLDivElement>(null);
   const engineMenuRef = useRef<HTMLDivElement>(null);
   const customWallpaperObjectUrlRef = useRef<string | null>(null);
-  const wallpaperPreloadRef = useRef<HTMLImageElement[]>([]);
   const isHydratingPreferencesRef = useRef(false);
   const aiLinksKey = getScopedStorageKey(aiLinksStorageKey, currentUserId);
+  const aiLinkOrderKey = getScopedStorageKey(aiLinkOrderStorageKey, currentUserId);
+  const hiddenAiLinksKey = getScopedStorageKey(hiddenAiLinksStorageKey, currentUserId);
   const webLinksKey = getScopedStorageKey(webLinksStorageKey, currentUserId);
+  const webLinkOrderKey = getScopedStorageKey(webLinkOrderStorageKey, currentUserId);
+  const hiddenWebLinksKey = getScopedStorageKey(hiddenWebLinksStorageKey, currentUserId);
   const wallpaperKey = getScopedStorageKey(customWallpaperStorageKey, currentUserId);
   const wallpaperIdKey = getScopedStorageKey(customWallpaperIdStorageKey, currentUserId);
   const searchEngineKey = getScopedStorageKey(searchEngineStorageKey, currentUserId);
@@ -339,7 +420,11 @@ export function HomePage({
       isHydratingPreferencesRef.current = true;
       cacheUserPreferences(currentUser.id, preferences);
       setCustomAiLinks(preferences.customAiLinks ?? []);
+      setAiLinkOrder(preferences.aiLinkOrder ?? []);
+      setHiddenAiLinkIds(preferences.hiddenAiLinkIds ?? []);
       setCustomWebLinks(preferences.customWebLinks ?? []);
+      setWebLinkOrder(preferences.webLinkOrder ?? []);
+      setHiddenWebLinkIds(preferences.hiddenWebLinkIds ?? []);
       setWallpaperId(preferences.wallpaperId);
       replaceCustomWallpaper(preferences.customWallpaper);
       setEngine(preferences.searchEngine);
@@ -354,7 +439,11 @@ export function HomePage({
 
     isHydratingPreferencesRef.current = true;
     const savedLinks = window.localStorage.getItem(aiLinksKey);
+    const savedAiLinkOrder = readJson<string[]>(aiLinkOrderKey, []);
+    const savedHiddenAiLinks = readJson<string[]>(hiddenAiLinksKey, []);
     const savedWebLinks = window.localStorage.getItem(webLinksKey);
+    const savedWebLinkOrder = readJson<string[]>(webLinkOrderKey, []);
+    const savedHiddenWebLinks = readJson<string[]>(hiddenWebLinksKey, []);
     const savedWallpaper = window.localStorage.getItem(wallpaperKey);
     const savedWallpaperId = window.localStorage.getItem(wallpaperIdKey);
     const savedSearchEngine = window.localStorage.getItem(searchEngineKey) as SearchEngineId | null;
@@ -368,6 +457,8 @@ export function HomePage({
     } else {
       setCustomAiLinks([]);
     }
+    setAiLinkOrder(savedAiLinkOrder);
+    setHiddenAiLinkIds(savedHiddenAiLinks);
 
     if (savedWebLinks) {
       try {
@@ -378,6 +469,8 @@ export function HomePage({
     } else {
       setCustomWebLinks([]);
     }
+    setWebLinkOrder(savedWebLinkOrder);
+    setHiddenWebLinkIds(savedHiddenWebLinks);
 
     if (savedWallpaperId) {
       setWallpaperId(savedWallpaperId);
@@ -426,8 +519,12 @@ export function HomePage({
     };
   }, [
     aiLinksKey,
+    aiLinkOrderKey,
     currentUser,
+    hiddenAiLinksKey,
+    hiddenWebLinksKey,
     searchEngineKey,
+    webLinkOrderKey,
     webLinksKey,
     wallpaperBlobKey,
     wallpaperIdKey,
@@ -440,21 +537,6 @@ export function HomePage({
         URL.revokeObjectURL(customWallpaperObjectUrlRef.current);
       }
     };
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      wallpaperPreloadRef.current = wallpapers
-        .filter((wallpaper) => wallpaper.image)
-        .map((wallpaper) => {
-          const image = new Image();
-          image.decoding = "async";
-          image.src = wallpaper.image;
-          return image;
-        });
-    }, 300);
-
-    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -498,8 +580,14 @@ export function HomePage({
     return () => document.removeEventListener("mousedown", closeEnginesOnOutsideClick);
   }, [showEngines]);
 
-  const allAiLinks = useMemo(() => [...defaultAiLinks, ...customAiLinks], [customAiLinks]);
-  const allWebLinks = useMemo(() => [...defaultWebLinks, ...customWebLinks], [customWebLinks]);
+  const allAiLinks = useMemo(
+    () => mergeLinks(defaultAiLinks, customAiLinks, aiLinkOrder, hiddenAiLinkIds),
+    [aiLinkOrder, customAiLinks, hiddenAiLinkIds]
+  );
+  const allWebLinks = useMemo(
+    () => mergeLinks(defaultWebLinks, customWebLinks, webLinkOrder, hiddenWebLinkIds),
+    [customWebLinks, hiddenWebLinkIds, webLinkOrder]
+  );
   const selectedEngine = searchEngines.find((item) => item.id === engine) ?? searchEngines[0];
   const selectedWallpaper =
     wallpaperId === "custom"
@@ -581,6 +669,69 @@ export function HomePage({
     setNewAiName("");
     setNewAiUrl("");
     setShowAddAi(false);
+  }
+
+  function saveAiLinkLayout(order: string[], hiddenIds: string[]) {
+    setAiLinkOrder(order);
+    setHiddenAiLinkIds(hiddenIds);
+    window.localStorage.setItem(aiLinkOrderKey, JSON.stringify(order));
+    window.localStorage.setItem(hiddenAiLinksKey, JSON.stringify(hiddenIds));
+    savePreferences({ aiLinkOrder: order, hiddenAiLinkIds: hiddenIds }).catch(() => {});
+  }
+
+  function saveWebLinkLayout(order: string[], hiddenIds: string[]) {
+    setWebLinkOrder(order);
+    setHiddenWebLinkIds(hiddenIds);
+    window.localStorage.setItem(webLinkOrderKey, JSON.stringify(order));
+    window.localStorage.setItem(hiddenWebLinksKey, JSON.stringify(hiddenIds));
+    savePreferences({ webLinkOrder: order, hiddenWebLinkIds: hiddenIds }).catch(() => {});
+  }
+
+  function handleLinkDragStart(event: DragEvent<HTMLAnchorElement>, id: string) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", id);
+  }
+
+  function handleLinkDrop(event: DragEvent<HTMLAnchorElement>, kind: LinkKind, targetId: string) {
+    event.preventDefault();
+
+    const draggedId = event.dataTransfer.getData("text/plain");
+    if (!draggedId || draggedId === targetId) {
+      return;
+    }
+
+    if (kind === "ai") {
+      const currentOrder = allAiLinks.map((link) => link.id);
+      saveAiLinkLayout(moveId(currentOrder, draggedId, targetId), hiddenAiLinkIds);
+      return;
+    }
+
+    const currentOrder = allWebLinks.map((link) => link.id);
+    saveWebLinkLayout(moveId(currentOrder, draggedId, targetId), hiddenWebLinkIds);
+  }
+
+  function deleteLink(kind: LinkKind, id: string) {
+    if (kind === "ai") {
+      const nextCustomLinks = customAiLinks.filter((link) => link.id !== id);
+      const nextOrder = aiLinkOrder.filter((item) => item !== id);
+      const nextHiddenIds = hiddenAiLinkIds.includes(id) ? hiddenAiLinkIds : [...hiddenAiLinkIds, id];
+
+      setCustomAiLinks(nextCustomLinks);
+      window.localStorage.setItem(aiLinksKey, JSON.stringify(nextCustomLinks));
+      saveAiLinkLayout(nextOrder, nextHiddenIds);
+      savePreferences({ customAiLinks: nextCustomLinks }).catch(() => {});
+      window.dispatchEvent(new Event("lushifu:ai-links-updated"));
+      return;
+    }
+
+    const nextCustomLinks = customWebLinks.filter((link) => link.id !== id);
+    const nextOrder = webLinkOrder.filter((item) => item !== id);
+    const nextHiddenIds = hiddenWebLinkIds.includes(id) ? hiddenWebLinkIds : [...hiddenWebLinkIds, id];
+
+    setCustomWebLinks(nextCustomLinks);
+    window.localStorage.setItem(webLinksKey, JSON.stringify(nextCustomLinks));
+    saveWebLinkLayout(nextOrder, nextHiddenIds);
+    savePreferences({ customWebLinks: nextCustomLinks }).catch(() => {});
   }
 
   function addWebLink(event: FormEvent<HTMLFormElement>) {
@@ -834,7 +985,7 @@ export function HomePage({
 
                 <Button
                   type="submit"
-                  className="teal-gradient cyber-glow h-14 rounded-full px-6 text-white shadow-glow lg:h-16"
+                  className="teal-gradient cyber-glow h-14 w-full rounded-full px-6 text-white shadow-glow lg:h-16 lg:w-40"
                 >
                   <span>{mode === "web" ? "搜索" : "筛选"}</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -909,7 +1060,15 @@ export function HomePage({
             {filteredWebLinks.length > 0 ? (
               <div className="ai-card-grid w-full min-w-0">
                 {filteredWebLinks.map((link) => (
-                  <LinkCard key={link.id} link={link} fallbackIcon={Globe2} />
+                  <LinkCard
+                    key={link.id}
+                    link={link}
+                    fallbackIcon={Globe2}
+                    kind="web"
+                    onDragStart={handleLinkDragStart}
+                    onDrop={handleLinkDrop}
+                    onDelete={deleteLink}
+                  />
                 ))}
               </div>
             ) : (
@@ -968,7 +1127,15 @@ export function HomePage({
             {filteredAiLinks.length > 0 ? (
               <div className="ai-card-grid w-full min-w-0">
                 {filteredAiLinks.map((link) => (
-                  <LinkCard key={link.id} link={link} fallbackIcon={Bot} />
+                  <LinkCard
+                    key={link.id}
+                    link={link}
+                    fallbackIcon={Bot}
+                    kind="ai"
+                    onDragStart={handleLinkDragStart}
+                    onDrop={handleLinkDrop}
+                    onDelete={deleteLink}
+                  />
                 ))}
               </div>
             ) : (
@@ -1040,10 +1207,18 @@ function SectionHeader({
 
 function LinkCard({
   link,
-  fallbackIcon: Icon
+  fallbackIcon: Icon,
+  kind,
+  onDragStart,
+  onDrop,
+  onDelete
 }: {
   link: AiLink | WebLink;
   fallbackIcon: typeof Search;
+  kind: LinkKind;
+  onDragStart: (event: DragEvent<HTMLAnchorElement>, id: string) => void;
+  onDrop: (event: DragEvent<HTMLAnchorElement>, kind: LinkKind, targetId: string) => void;
+  onDelete: (kind: LinkKind, id: string) => void;
 }) {
   const logo = link.logo ?? getFaviconUrl(link.href);
 
@@ -1052,8 +1227,17 @@ function LinkCard({
       href={link.href}
       target="_blank"
       rel="noreferrer"
+      draggable
+      onDragStart={(event) => onDragStart(event, link.id)}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => onDrop(event, kind, link.id)}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onDelete(kind, link.id);
+      }}
+      title="拖动可调整位置，右键可删除"
       className={cn(
-        "ai-link-card cyber-glow group relative flex min-h-[108px] items-center gap-3.5 overflow-hidden rounded-lg p-4 focus-ring",
+        "ai-link-card cyber-glow group relative flex min-h-[108px] cursor-grab items-center gap-3.5 overflow-hidden rounded-lg p-4 focus-ring active:cursor-grabbing",
         "bg-gradient-to-br",
         link.accent
       )}
@@ -1112,7 +1296,7 @@ function WallpaperPanel({
               style={
                 wallpaper.image
                   ? {
-                      backgroundImage: `url(${wallpaper.image})`,
+                      backgroundImage: `url(${wallpaper.preview ?? wallpaper.image})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center"
                     }

@@ -26,13 +26,14 @@ export default function RootLayout({
               <main className="min-h-[calc(100vh-4rem)] px-3 py-5 sm:px-6 lg:px-8">
                 {children}
               </main>
-              <footer className="border-t border-border/70 bg-background/80 px-4 py-7 text-center backdrop-blur-xl lg:px-8">
+              <footer className="border-t border-border/60 bg-background/78 px-4 py-3 text-center backdrop-blur-xl lg:px-8">
                 <div className="mx-auto flex max-w-[1560px] items-center justify-center">
                   <a
                     href="https://beian.miit.gov.cn/"
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full border border-border/70 bg-card/70 px-4 py-2 text-sm font-medium tracking-wide text-muted-foreground shadow-sm transition-colors hover:border-primary/25 hover:text-foreground"
+                    className="text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+                    style={{ fontFamily: "SimSun, 宋体, serif" }}
                   >
                     沪ICP备2026030486号
                   </a>

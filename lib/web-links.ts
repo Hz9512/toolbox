@@ -8,6 +8,8 @@ export type WebLink = {
 };
 
 export const webLinksStorageKey = "lushifu.webLinks";
+export const webLinkOrderStorageKey = "lushifu.webLinkOrder";
+export const hiddenWebLinksStorageKey = "lushifu.hiddenWebLinks";
 
 export const defaultWebLinks: WebLink[] = [
   {

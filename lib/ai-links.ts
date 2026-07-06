@@ -8,6 +8,8 @@ export type AiLink = {
 };
 
 export const aiLinksStorageKey = "lushifu.aiLinks";
+export const aiLinkOrderStorageKey = "lushifu.aiLinkOrder";
+export const hiddenAiLinksStorageKey = "lushifu.hiddenAiLinks";
 
 export const defaultAiLinks: AiLink[] = [
   {

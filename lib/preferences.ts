@@ -1,8 +1,18 @@
 "use client";
 
-import { aiLinksStorageKey, type AiLink } from "@/lib/ai-links";
+import {
+  aiLinkOrderStorageKey,
+  aiLinksStorageKey,
+  hiddenAiLinksStorageKey,
+  type AiLink
+} from "@/lib/ai-links";
 import { defaultUserPreferences, type SearchEngineId, type ThemeMode, type UserPreferences } from "@/lib/user-types";
-import { webLinksStorageKey, type WebLink } from "@/lib/web-links";
+import {
+  hiddenWebLinksStorageKey,
+  webLinkOrderStorageKey,
+  webLinksStorageKey,
+  type WebLink
+} from "@/lib/web-links";
 
 export const customWallpaperStorageKey = "lushifu.wallpaper";
 export const customWallpaperIdStorageKey = "lushifu.wallpaperId";
@@ -14,7 +24,11 @@ const customWallpaperDbKey = "custom";
 
 const userScopedStorageKeys = [
   aiLinksStorageKey,
+  aiLinkOrderStorageKey,
+  hiddenAiLinksStorageKey,
   webLinksStorageKey,
+  webLinkOrderStorageKey,
+  hiddenWebLinksStorageKey,
   customWallpaperStorageKey,
   customWallpaperIdStorageKey,
   wallpaperOpacityStorageKey,
@@ -93,7 +107,11 @@ export async function readLocalPreferences(
   theme: ThemeMode
 ): Promise<UserPreferences> {
   const aiLinksKey = getScopedStorageKey(aiLinksStorageKey, userId);
+  const aiLinkOrderKey = getScopedStorageKey(aiLinkOrderStorageKey, userId);
+  const hiddenAiLinksKey = getScopedStorageKey(hiddenAiLinksStorageKey, userId);
   const webLinksKey = getScopedStorageKey(webLinksStorageKey, userId);
+  const webLinkOrderKey = getScopedStorageKey(webLinkOrderStorageKey, userId);
+  const hiddenWebLinksKey = getScopedStorageKey(hiddenWebLinksStorageKey, userId);
   const wallpaperKey = getScopedStorageKey(customWallpaperStorageKey, userId);
   const wallpaperIdKey = getScopedStorageKey(customWallpaperIdStorageKey, userId);
   const wallpaperOpacityKey = getScopedStorageKey(wallpaperOpacityStorageKey, userId);
@@ -108,7 +126,11 @@ export async function readLocalPreferences(
   return {
     theme,
     customAiLinks: readJson<AiLink[]>(aiLinksKey, []),
+    aiLinkOrder: readJson<string[]>(aiLinkOrderKey, []),
+    hiddenAiLinkIds: readJson<string[]>(hiddenAiLinksKey, []),
     customWebLinks: readJson<WebLink[]>(webLinksKey, []),
+    webLinkOrder: readJson<string[]>(webLinkOrderKey, []),
+    hiddenWebLinkIds: readJson<string[]>(hiddenWebLinksKey, []),
     wallpaperId,
     customWallpaper,
     wallpaperOpacity: readBoundedNumber(wallpaperOpacityKey, defaultUserPreferences.wallpaperOpacity),
@@ -122,8 +144,24 @@ export function cacheUserPreferences(userId: string | null, preferences: UserPre
     JSON.stringify(preferences.customAiLinks)
   );
   window.localStorage.setItem(
+    getScopedStorageKey(aiLinkOrderStorageKey, userId),
+    JSON.stringify(preferences.aiLinkOrder)
+  );
+  window.localStorage.setItem(
+    getScopedStorageKey(hiddenAiLinksStorageKey, userId),
+    JSON.stringify(preferences.hiddenAiLinkIds)
+  );
+  window.localStorage.setItem(
     getScopedStorageKey(webLinksStorageKey, userId),
     JSON.stringify(preferences.customWebLinks)
+  );
+  window.localStorage.setItem(
+    getScopedStorageKey(webLinkOrderStorageKey, userId),
+    JSON.stringify(preferences.webLinkOrder)
+  );
+  window.localStorage.setItem(
+    getScopedStorageKey(hiddenWebLinksStorageKey, userId),
+    JSON.stringify(preferences.hiddenWebLinkIds)
   );
   window.localStorage.setItem(
     getScopedStorageKey(customWallpaperIdStorageKey, userId),

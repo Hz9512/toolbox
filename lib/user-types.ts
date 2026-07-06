@@ -7,7 +7,11 @@ export type SearchEngineId = "bing" | "baidu" | "sogou";
 export type UserPreferences = {
   theme: ThemeMode;
   customAiLinks: AiLink[];
+  aiLinkOrder: string[];
+  hiddenAiLinkIds: string[];
   customWebLinks: WebLink[];
+  webLinkOrder: string[];
+  hiddenWebLinkIds: string[];
   wallpaperId: string;
   customWallpaper: string;
   wallpaperOpacity: number;
@@ -31,7 +35,11 @@ export type AuthResult = {
 export const defaultUserPreferences: UserPreferences = {
   theme: "system",
   customAiLinks: [],
+  aiLinkOrder: [],
+  hiddenAiLinkIds: [],
   customWebLinks: [],
+  webLinkOrder: [],
+  hiddenWebLinkIds: [],
   wallpaperId: "default",
   customWallpaper: "",
   wallpaperOpacity: 85,
