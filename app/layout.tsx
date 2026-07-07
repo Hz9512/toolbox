@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { CommandMenu } from "@/components/command-menu";
 import { Header } from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -41,7 +40,6 @@ export default function RootLayout({
               </footer>
             </div>
           </div>
-          <CommandMenu />
         </ThemeProvider>
       </body>
     </html>

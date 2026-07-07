@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Bot, Github, Globe2, Home, Wrench } from "lucide-react";
+import { Bot, Github, Globe2, Wrench } from "lucide-react";
 
 import { MobileNav } from "@/components/mobile-nav";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/user-menu";
+import { WallpaperNavButton } from "@/components/wallpaper-nav-button";
 
 export function Header() {
   return (
@@ -17,13 +18,7 @@ export function Header() {
             <span className="ml-1 inline-block h-1.5 w-1.5 -translate-y-2 rounded-full bg-primary sm:h-2 sm:w-2" />
           </Link>
           <nav className="ml-3 hidden items-center gap-1 md:flex">
-            <Link
-              href="/"
-              className="cyber-button inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-foreground/80 transition-colors hover:bg-foreground/10 hover:text-foreground dark:text-cyan-50/80 dark:hover:text-white"
-            >
-              <Home className="h-4 w-4" />
-              首页
-            </Link>
+            <WallpaperNavButton />
             <Link
               href="/?mode=web"
               className="cyber-button inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-foreground/80 transition-colors hover:bg-foreground/10 hover:text-foreground dark:text-cyan-50/80 dark:hover:text-white"

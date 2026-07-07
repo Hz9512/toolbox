@@ -12,19 +12,16 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
   Bot,
   CheckCircle2,
   Check,
   ChevronDown,
-  Command,
   Globe2,
   Loader2,
   Plus,
   RotateCcw,
   Search,
-  Upload,
-  Wallpaper
+  Upload
 } from "lucide-react";
 
 import { ToolCard } from "@/components/tool-card";
@@ -348,10 +345,6 @@ async function createStorableWallpaper(file: File) {
   return canvas.toDataURL("image/jpeg", 0.45);
 }
 
-function openCommandMenu() {
-  window.dispatchEvent(new Event("lushifu:open-command"));
-}
-
 function openExternal(href: string) {
   window.open(href, "_blank", "noopener,noreferrer");
 }
@@ -562,6 +555,20 @@ export function HomePage({
     document.addEventListener("mousedown", closeWallpapersOnOutsideClick);
     return () => document.removeEventListener("mousedown", closeWallpapersOnOutsideClick);
   }, [showWallpapers]);
+
+  useEffect(() => {
+    function openWallpapers() {
+      setShowWallpapers(true);
+    }
+
+    if (window.sessionStorage.getItem("lushifu.openWallpaper") === "1") {
+      window.sessionStorage.removeItem("lushifu.openWallpaper");
+      setShowWallpapers(true);
+    }
+
+    window.addEventListener("lushifu:open-wallpaper", openWallpapers);
+    return () => window.removeEventListener("lushifu:open-wallpaper", openWallpapers);
+  }, []);
 
   useEffect(() => {
     if (!showEngines) {
@@ -850,36 +857,8 @@ export function HomePage({
       <div className="relative z-10 mx-auto w-full max-w-[1560px] min-w-0">
         <h1 className="sr-only">Lushifu 导航</h1>
 
-        <section className="mx-auto w-full max-w-6xl min-w-0 pt-1 sm:pt-5">
+        <section className="mx-auto w-full max-w-5xl min-w-0 pt-1 sm:pt-5">
           <div ref={wallpaperPanelRef} className="mb-4 flex flex-col items-center gap-4">
-            <div className="flex w-full justify-end">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="cyber-button rounded-full bg-card/75 shadow-sm backdrop-blur-xl"
-                  onClick={openCommandMenu}
-                >
-                  <Command className="mr-2 h-4 w-4" />
-                  <span>全局搜索</span>
-                  <kbd className="ml-2 rounded border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    ⌘K
-                  </kbd>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="cyber-button rounded-full bg-card/75 shadow-sm backdrop-blur-xl"
-                  onClick={() => setShowWallpapers((value) => !value)}
-                >
-                  <Wallpaper className="mr-2 h-4 w-4" />
-                  壁纸
-                </Button>
-              </div>
-            </div>
-
             {showWallpapers ? (
               <WallpaperPanel
                 wallpaperId={wallpaperId}
@@ -891,54 +870,13 @@ export function HomePage({
           </div>
 
           <div className="relative min-w-0">
-              <form
-                onSubmit={submitSearch}
-                className="relative flex w-full min-w-0 flex-col gap-3 lg:flex-row lg:items-center"
-              >
-                <div className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
-                  <Input
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder={
-                      mode === "web"
-                        ? "输入关键词，回车搜索网页..."
-                        : mode === "ai"
-                          ? "搜索 AI 工具名称或用途..."
-                          : "搜索工具名称、关键词或用途..."
-                    }
-                    className={cn(
-                      "h-16 rounded-full border border-border/55 bg-card/88 pl-11 text-base shadow-glass backdrop-blur-2xl transition-all placeholder:text-muted-foreground/70 hover:border-primary/25 hover:bg-card focus-visible:border-primary/45 focus-visible:bg-background focus-visible:ring-primary/25 dark:border-cyan-400/15 dark:bg-[#101115]/82 dark:shadow-[0_24px_80px_rgb(0_0_0/0.38),0_0_40px_rgb(34_211_238/0.08)]",
-                      mode === "web" ? "pr-32" : "pr-12"
-                    )}
-                  />
-                  {query || category !== "all" ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "absolute top-1/2 h-9 w-9 -translate-y-1/2 rounded-full text-muted-foreground hover:bg-foreground/5",
-                        mode === "web" ? "right-24" : "right-2"
-                      )}
-                      onClick={() => {
-                        setQuery("");
-                        setCategory("all");
-                      }}
-                      aria-label="重置筛选"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-                  ) : null}
-
+              <form onSubmit={submitSearch} className="relative w-full min-w-0">
+                <div className="flex h-16 w-full min-w-0 items-center gap-2 rounded-full border border-border/55 bg-card/88 px-3 shadow-glass backdrop-blur-2xl transition-all hover:border-primary/25 hover:bg-card focus-within:border-primary/45 focus-within:bg-background focus-within:ring-2 focus-within:ring-primary/25 dark:border-cyan-400/15 dark:bg-[#101115]/82 dark:shadow-[0_24px_80px_rgb(0_0_0/0.38),0_0_40px_rgb(34_211_238/0.08)]">
                   {mode === "web" ? (
-                    <div
-                      ref={engineMenuRef}
-                      className="absolute right-2 top-1/2 z-20 -translate-y-1/2"
-                    >
+                    <div ref={engineMenuRef} className="relative z-20 shrink-0">
                       <button
                         type="button"
-                        className="cyber-button inline-flex h-10 items-center gap-2 rounded-full border border-border/70 bg-background/90 px-3 text-sm font-semibold text-foreground shadow-sm outline-none transition-all hover:border-primary/35 hover:bg-card focus-visible:ring-2 focus-visible:ring-primary/25"
+                        className="cyber-button inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-foreground outline-none transition-all hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-primary/25"
                         onClick={() => setShowEngines((value) => !value)}
                         aria-label="选择搜索引擎"
                         aria-expanded={showEngines}
@@ -953,7 +891,7 @@ export function HomePage({
                       </button>
 
                       {showEngines ? (
-                        <div className="cyber-panel absolute right-0 top-12 w-32 overflow-hidden rounded-lg p-1 shadow-glass backdrop-blur-2xl animate-scale-in">
+                        <div className="cyber-panel absolute left-0 top-12 w-32 overflow-hidden rounded-lg p-1 shadow-glass backdrop-blur-2xl animate-scale-in">
                           {searchEngines.map((item) => {
                             const active = item.id === engine;
 
@@ -980,16 +918,49 @@ export function HomePage({
                         </div>
                       ) : null}
                     </div>
-                  ) : null}
-                </div>
+                  ) : (
+                    <Search className="ml-2 h-4 w-4 shrink-0 text-muted-foreground/70" />
+                  )}
 
-                <Button
-                  type="submit"
-                  className="teal-gradient cyber-glow h-14 w-full rounded-full px-6 text-white shadow-glow lg:h-16 lg:w-40"
-                >
-                  <span>{mode === "web" ? "搜索" : "筛选"}</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                  <Input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={
+                      mode === "web"
+                        ? "输入关键词，回车搜索网页..."
+                        : mode === "ai"
+                          ? "搜索 AI 工具名称或用途..."
+                          : "搜索工具名称、关键词或用途..."
+                    }
+                    className="h-full min-w-0 flex-1 border-0 bg-transparent px-2 text-base shadow-none outline-none placeholder:text-muted-foreground/70 focus-visible:ring-0"
+                  />
+
+                  {query || category !== "all" ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 rounded-full text-muted-foreground hover:bg-foreground/5"
+                      onClick={() => {
+                        setQuery("");
+                        setCategory("all");
+                      }}
+                      aria-label="重置筛选"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 shrink-0 rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    aria-label={mode === "web" ? "搜索" : "筛选"}
+                  >
+                    <Search className="h-5 w-5" />
+                  </Button>
+                </div>
               </form>
 
               {mode === "tools" ? (
@@ -1017,22 +988,6 @@ export function HomePage({
 
         {mode === "web" ? (
           <section className="mt-8 sm:mt-10">
-            <SectionHeader
-              title="常用网站"
-              description={`当前显示 ${filteredWebLinks.length} 个常用网站，可直接打开。`}
-              action={
-                <Button
-                  type="button"
-                  size="sm"
-                  className="teal-gradient w-fit rounded-full text-white shadow-sm shadow-teal-500/20"
-                  onClick={() => setShowAddWeb((value) => !value)}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  添加
-                </Button>
-              }
-            />
-
             {showAddWeb ? (
               <form
                 onSubmit={addWebLink}
@@ -1057,49 +1012,25 @@ export function HomePage({
               </form>
             ) : null}
 
-            {filteredWebLinks.length > 0 ? (
-              <div className="ai-card-grid w-full min-w-0">
-                {filteredWebLinks.map((link) => (
-                  <LinkCard
-                    key={link.id}
-                    link={link}
-                    fallbackIcon={Globe2}
-                    kind="web"
-                    onDragStart={handleLinkDragStart}
-                    onDrop={handleLinkDrop}
-                    onDelete={deleteLink}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="没有匹配的常用网站"
-                description="换一个关键词试试，或添加一个新的自定义网站。"
-                actionLabel="添加网站"
-                onAction={() => setShowAddWeb(true)}
-              />
-            )}
+            <div className="ai-card-grid w-full min-w-0">
+              {filteredWebLinks.map((link) => (
+                <LinkCard
+                  key={link.id}
+                  link={link}
+                  fallbackIcon={Globe2}
+                  kind="web"
+                  onDragStart={handleLinkDragStart}
+                  onDrop={handleLinkDrop}
+                  onDelete={deleteLink}
+                />
+              ))}
+              <AddLinkCard label="添加网站" onClick={() => setShowAddWeb((value) => !value)} />
+            </div>
           </section>
         ) : null}
 
         {mode === "ai" ? (
           <section className="mt-8 sm:mt-10">
-            <SectionHeader
-              title="AI 导航"
-              description={`当前显示 ${filteredAiLinks.length} 个 AI 入口，可直接打开常用助手。`}
-              action={
-                <Button
-                  type="button"
-                  size="sm"
-                  className="teal-gradient w-fit rounded-full text-white shadow-sm shadow-teal-500/20"
-                  onClick={() => setShowAddAi((value) => !value)}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  添加
-                </Button>
-              }
-            />
-
             {showAddAi ? (
               <form
                 onSubmit={addAiLink}
@@ -1124,28 +1055,20 @@ export function HomePage({
               </form>
             ) : null}
 
-            {filteredAiLinks.length > 0 ? (
-              <div className="ai-card-grid w-full min-w-0">
-                {filteredAiLinks.map((link) => (
-                  <LinkCard
-                    key={link.id}
-                    link={link}
-                    fallbackIcon={Bot}
-                    kind="ai"
-                    onDragStart={handleLinkDragStart}
-                    onDrop={handleLinkDrop}
-                    onDelete={deleteLink}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="没有匹配的 AI 入口"
-                description="换一个关键词试试，或添加一个新的自定义入口。"
-                actionLabel="添加 AI"
-                onAction={() => setShowAddAi(true)}
-              />
-            )}
+            <div className="ai-card-grid w-full min-w-0">
+              {filteredAiLinks.map((link) => (
+                <LinkCard
+                  key={link.id}
+                  link={link}
+                  fallbackIcon={Bot}
+                  kind="ai"
+                  onDragStart={handleLinkDragStart}
+                  onDrop={handleLinkDrop}
+                  onDelete={deleteLink}
+                />
+              ))}
+              <AddLinkCard label="添加 AI" onClick={() => setShowAddAi((value) => !value)} />
+            </div>
           </section>
         ) : null}
 
@@ -1258,6 +1181,28 @@ function LinkCard({
         <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-muted-foreground">{link.description}</p>
       </div>
     </a>
+  );
+}
+
+function AddLinkCard({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "ai-link-card cyber-glow group relative flex min-h-[108px] items-center gap-3.5 overflow-hidden rounded-lg p-4 text-left focus-ring",
+        "bg-gradient-to-br from-teal-500/20 to-cyan-500/10"
+      )}
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 bg-card/72 backdrop-blur-xl transition-colors duration-300 group-hover:bg-card/62 dark:bg-[#121214]/76 dark:group-hover:bg-[#121214]/66" />
+      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background/90 text-primary shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-primary/30 group-hover:shadow-md">
+        <Plus className="h-5 w-5" />
+      </div>
+      <div className="relative min-w-0 flex-1">
+        <h3 className="text-[15px] font-bold tracking-tight text-foreground/95">{label}</h3>
+        <p className="mt-1.5 text-sm leading-6 text-muted-foreground">添加一个自定义入口。</p>
+      </div>
+    </button>
   );
 }
 
