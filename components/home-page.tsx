@@ -869,7 +869,7 @@ export function HomePage({
             ) : null}
           </div>
 
-          <div className="relative min-w-0">
+          <div className="relative z-30 min-w-0">
               <form onSubmit={submitSearch} className="relative w-full min-w-0">
                 <div className="flex h-16 w-full min-w-0 items-center gap-2 rounded-full border border-border/55 bg-card/88 px-3 shadow-glass backdrop-blur-2xl transition-all hover:border-primary/25 hover:bg-card focus-within:border-primary/45 focus-within:bg-background focus-within:ring-2 focus-within:ring-primary/25 dark:border-cyan-400/15 dark:bg-[#101115]/82 dark:shadow-[0_24px_80px_rgb(0_0_0/0.38),0_0_40px_rgb(34_211_238/0.08)]">
                   {mode === "web" ? (
@@ -891,7 +891,7 @@ export function HomePage({
                       </button>
 
                       {showEngines ? (
-                        <div className="cyber-panel absolute left-0 top-12 w-32 overflow-hidden rounded-lg p-1 shadow-glass backdrop-blur-2xl animate-scale-in">
+                        <div className="cyber-panel absolute left-0 top-12 z-50 w-32 overflow-hidden rounded-lg p-1 shadow-glass backdrop-blur-2xl animate-scale-in">
                           {searchEngines.map((item) => {
                             const active = item.id === engine;
 
